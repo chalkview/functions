@@ -43,10 +43,11 @@ uber/
 
 search-google/
 
-    request   - Request a search.
-    tracker   - Tracks where a search has been performed for a particular type
-    snapshot  - Place Snapshot Data
-    place     - Place Details
+    request     - Request a search.
+    track       - Track where a search has been performed for a particular type
+    trackMore   - Track was performed but detected more places inside its range. Init request in surouding area. Used for heavily populated area.
+    snapshot    - Place Snapshot Data
+    place       - Place Details
 
 
 boardIds/
