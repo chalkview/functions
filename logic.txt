@@ -28,7 +28,6 @@ search/
     init      - Initilze a search at a Location / Type
 
 
-
 place/
 
     geoList   - Geocoded list of places for each type
@@ -56,9 +55,6 @@ boardIds/
     facebookId;
     yelpId:
     foursquareId:
-
-
-
 
 places
     google
