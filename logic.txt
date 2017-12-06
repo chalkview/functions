@@ -2,6 +2,88 @@
 
 
 
-firebase
 
-    / Search
+
+status      - Status of system
+
+config/
+    system  -   System Config
+    app     -   App Config
+
+user        - System Users
+board       = Boards
+page        - Board Pages
+card        - Board Cards
+
+user-board/
+
+    favorites   - Users favorite boards
+    owner       - Boards owned by Users
+    admin       - Boards user has access rights to
+
+
+search/
+
+    type      - Types of search and the parameters used to perform that search.
+    init      - Initilze a search at a Location / Type
+
+
+
+place/
+
+    geoList   - Geocoded list of places for each type
+    snapshot  - Snapshot Details about a placeDetail
+    details   - Details about a place
+
+uber/
+
+    searchrequest - Uber Search Results
+    searchresults - Uber Search Results
+
+
+search-google/
+
+    request   - Request a search.
+    tracker   - Tracks where a search has been performed for a particular type
+    snapshot  - Place Snapshot Data
+    place     - Place Details
+
+
+boardIds/
+
+    googleId:
+    facebookId;
+    yelpId:
+    foursquareId:
+
+
+
+
+places
+    google
+    facebook
+    foursquare
+    yelp
+
+
+boards
+    id
+
+boardLinks/
+    id/
+        google:
+        facebook:
+        foursquare:
+        yelp:
+
+Search Wixom (lat,lng) for Resturants (type1)
+
+    int Search (lat,lng,type)
+    $results = place/geoList/type1 (lat,lng)
+
+
+
+
+
+
+
