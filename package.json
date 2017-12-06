@@ -1,0 +1,29 @@
+{
+  "name": "functions",
+  "version": "1.0.0",
+  "description": "ChalkView Functions",
+  "main": "google.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/chalkview/functions.git"
+  },
+  "keywords": [
+    "Chalkview",
+    "Functions"
+  ],
+  "author": "Michael Abele",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/chalkview/functions/issues"
+  },
+  "homepage": "https://github.com/chalkview/functions#readme",
+  "dependencies": {
+    "firebase": "^4.7.0",
+    "firebase-admin": "^5.5.1",
+    "geofire": "^4.1.2",
+    "request": "^2.83.0"
+  }
+}
