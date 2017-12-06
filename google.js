@@ -25,9 +25,8 @@ admin.initializeApp({
 
 var db = admin.database();
 
+///////////////////// Setup Listeners /////////////////////
 
-
-// Setup Listeners
 var searchInitRef = db.ref("searchInit");
 searchInitRef.on("child_added", function (snapshot) {
     var searchRequest = snapshot.val();
@@ -42,7 +41,6 @@ searchRef.on("child_added", function (snapshot) {
 
 
 function searchInit(searchRequest, searchInitKey) {
-
     var searchTrackerId = searchRequest.lat.toFixed(3) + "x" + searchRequest.lng.toFixed(3)
     var key = searchTrackerId.replace(/\./g, 'd')
     var searchTrackerRef = db.ref("SearchTracker/" + key).child(searchRequest.type);
