@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <title>Place searches</title>
+  <meta name="viewport" content="initial-scale=1.0, user-scalable=no">
+  <meta charset="utf-8">
+  <style>
+    /* Always set the map height explicitly to define the size of the div
+       * element that contains the map. */
+
+    #map {
+      height: 100%;
+    }
+
+    /* Optional: Makes the sample page fill the window. */
+
+    html,
+    body {
+      height: 100%;
+      margin: 0;
+      padding: 0;
+    }
+  </style>
+  <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.6.4/angular.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/angularFire/2.3.0/angularfire.js"></script>
+  <script src="https://cdn.firebase.com/libs/geofire/4.1.2/geofire.min.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/4.8.0/firebase.js"></script>
+  <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyB2FJl2CsXjc4sKcNDOHfjAe0c-ztTe09g&libraries=places"></script>
+  <script>
+
+
+    // Initialize Firebase
+    var config = {
+      apiKey: "AIzaSyCtRdgzAjqR_g3dndoKhrnyA_J_3avaYc0",
+      authDomain: "chalkview.firebaseapp.com",
+      databaseURL: "https://chalkview.firebaseio.com",
+      projectId: "chalkview",
+      storageBucket: "chalkview.appspot.com",
+      messagingSenderId: "466413565571"
+    };
+    firebase.initializeApp(config);
+
+    var db = firebase.database();
+
+    var app = angular.module('myApp', []);
+    app.controller('myCtrl', function ($scope) {
+
+      $scope.geoList = null;
+      var pyrmont = { lat: 42.531984, lng: -83.541875 };
+      infowindow = new google.maps.InfoWindow();
+      map = new google.maps.Map(document.getElementById('map'), {
+        center: pyrmont,
+        zoom: 15
+      });
+
+      map.addListener('click', function (event) {
+        var lat = event.latLng.lat();
+        var lng = event.latLng.lng();
+
+        var firebaseRef = firebase.database().ref('search-2/geolist/' + $scope.searchType);
+        var geoFire = new GeoFire(firebaseRef);
+        var ref = geoFire.ref();  // ref === firebaseRef
+        var geoQuery = geoFire.query({
+          center: [lat, lng],
+          radius: 5
+        });
+
+        geoQuery.on("key_entered", function (key, location, distance) {
+
+          firebase.database().ref('/search-2/snapshot/' + key).once('value').then(function (snapshot) {
+            var marker = new google.maps.Marker({
+              map: map,
+              position: { lat: location[0], lng: location[1] }
+            });
+            google.maps.event.addListener(marker, 'click', function () {
+              infowindow.setContent(snapshot.val().n);
+              infowindow.open(map, this);
+            });
+          });
+        });
+
+        var searchInitRef = db.ref("search-2/init");
+        searchInitRef.push({ type: $scope.searchType, lat: lat, lng: lng });
+
+
+
+
+      });
+
+      $scope.searchType = 2;
+
+    });
+
+
+
+
+  </script>
+</head>
+
+<body ng-app="myApp" ng-controller="myCtrl">
+
+  <div id="map"></div>
+
+</body>
+
+</html>

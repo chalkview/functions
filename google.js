@@ -27,15 +27,16 @@ var db = admin.database();
 
 ///////////////////// Setup Listeners /////////////////////
 
-var searchInitRef = db.ref("searchInit");
+var searchInitRef = db.ref("search-2/init");
 searchInitRef.on("child_added", function (snapshot) {
     var searchRequest = snapshot.val();
     searchInit(searchRequest, snapshot.key);
 });
 
-var searchRef = db.ref("searchRequest");
+var searchRef = db.ref("search-2/request");
 searchRef.on("child_added", function (snapshot) {
     var searchRequest = snapshot.val();
+    console.log(searchRequest)
     search(searchRequest, snapshot.key);
 });
 
@@ -43,16 +44,16 @@ searchRef.on("child_added", function (snapshot) {
 function searchInit(searchRequest, searchInitKey) {
     var searchTrackerId = searchRequest.lat.toFixed(3) + "x" + searchRequest.lng.toFixed(3)
     var key = searchTrackerId.replace(/\./g, 'd')
-    var searchTrackerRef = db.ref("SearchTracker/" + key).child(searchRequest.type);
+    var searchTrackerRef = db.ref("search-2/track" + key).child(searchRequest.type);
     searchTrackerRef.once("value", function (snapshot) {
         if (snapshot.val() != true) {
-            // Search
-            db.ref("searchRequest").push(searchRequest);
+            // Not Previously Searched. Request one.
+            db.ref("search-2/request").push(searchRequest);
         } else {
             //console.log('Search Already Cached')
         }
         // Delete SearchInit node
-        var searchInitRef = db.ref("searchInit/" + searchInitKey);
+        var searchInitRef = db.ref("search-2/init/" + searchInitKey);
         searchInitRef.set(null);
     });
 }
@@ -66,9 +67,11 @@ function search(searchRequest, searchRequestKey) {
             searchType = "restaurant";
             break;
         case 2:
+        searchType = "bar";
             break;
         default:
     }
+
 
     var searchUrl = "https://maps.googleapis.com/maps/api/place/nearbysearch/json?rankby=distance&type=" + searchType + "&location=" + searchRequest.lat + "," + searchRequest.lng + "&key=" + googleKey;
 
@@ -85,7 +88,7 @@ function search(searchRequest, searchRequestKey) {
             // Add SearchCompleteID Record
             var searchTrackerId = searchRequest.lat.toFixed(3) + "x" + searchRequest.lng.toFixed(3)
             var key = searchTrackerId.replace(/\./g, 'd')
-            db.ref("SearchTracker/" + key).child(searchRequest.type).set(true);
+            db.ref("search-2/track/" + key).child(searchRequest.type).set(true);
 
         } else {
             // Error Occurred
@@ -93,8 +96,9 @@ function search(searchRequest, searchRequestKey) {
         }
     });
 
+
     // Delete SearchInit node
-    var searchInitRef = db.ref("searchRequest/" + searchRequestKey);
+    var searchInitRef = db.ref("search-2/request/" + searchRequestKey);
     searchInitRef.set(null);
 
 }
@@ -107,12 +111,12 @@ function addPlace(place,type) {
         lat: place.geometry.location.lat,
         lng: place.geometry.location.lng
     }
-    var geoFire = new GeoFire(db.ref("SearchGeo/type" + type));
+    var geoFire = new GeoFire(db.ref("search-2/geolist/" + type));
     geoFire.set(place.id, [place.geometry.location.lat, place.geometry.location.lng]).then(function () {
     }, function (error) {
     });
     // Add Summary Record
-    db.ref("PlaceSummary/" + place.id).set(newPlace);
+    db.ref("search-2/snapshot/" + place.id).set(newPlace);
     searchInitRef.set(null);
 }
 

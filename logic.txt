@@ -42,6 +42,7 @@ uber/
 
 search-2/  1=Chalkview 2=Google 3=Facebook 4=FourSquare 5=Yelp
 
+    init        - Init a Search
     request     - Request a search.
     track       - Track where a search has been performed for a particular type
     trackMore   - Track was performed but detected more places inside its range. Init request in surrouding area. Used for heavily populated area.
