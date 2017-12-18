@@ -12,6 +12,7 @@
     #map {
       height: 100%;
     }
+
     /* Optional: Makes the sample page fill the window. */
 
     html,
@@ -58,43 +59,45 @@
         var lat = event.latLng.lat();
         var lng = event.latLng.lng();
 
-        var firebaseRef = firebase.database().ref('search-2/geolist/' + $scope.searchType);
-        var geoFire = new GeoFire(firebaseRef);
-        var ref = geoFire.ref(); // ref === firebaseRef
-        var geoQuery = geoFire.query({
-          center: [lat, lng],
-          radius: 1
-        });
 
-        geoQuery.on("key_entered", function (key, location, distance) {
+        $scope.searchnow(201, lat, lng);
 
-          console.log('add');
+        // var firebaseRef = firebase.database().ref('search-2/geolist/' + $scope.searchType);
+        // var geoFire = new GeoFire(firebaseRef);
+        // var ref = geoFire.ref(); // ref === firebaseRef
+        // var geoQuery = geoFire.query({
+        //   center: [lat, lng],
+        //   radius: 20
+        // });
 
-          firebase.database().ref('/search-2/snapshot/' + key).once('value').then(function (snapshot) {
-            var marker = new google.maps.Marker({
-              map: map,
-              position: {
-                lat: location[0],
-                lng: location[1]
-              }
-            });
-            google.maps.event.addListener(marker, 'click', function () {
-              infowindow.setContent(snapshot.val().n);
-              infowindow.open(map, this);
-            });
-          });
-        });
+        // geoQuery.on("key_entered", function (key, location, distance) {
 
-        geoQuery.on("ready", function () {
-          console.log('REASDY !!');
-        });
+        //   console.log('add');
+        //   firebase.database().ref('/search-2/snapshot/' + key).once('value').then(function (snapshot) {
+        //     var marker = new google.maps.Marker({
+        //       map: map,
+        //       position: {
+        //         lat: location[0],
+        //         lng: location[1]
+        //       }
+        //     });
+        //     google.maps.event.addListener(marker, 'click', function () {
+        //       infowindow.setContent(snapshot.val().n);
+        //       infowindow.open(map, this);
+        //     });
+        //   });
+        // });
 
-        var searchInitRef = db.ref("search-2/init");
-        searchInitRef.push({
-          type: $scope.searchType,
-          lat: lat,
-          lng: lng
-        });
+        // geoQuery.on("ready", function () {
+        //   console.log('REASDY !!');
+        // });
+
+        // var searchInitRef = db.ref("search-2/init");
+        // searchInitRef.push({
+        //   type: $scope.searchType,
+        //   lat: lat,
+        //   lng: lng
+        // });
 
 
 
@@ -103,21 +106,92 @@
 
       $scope.searchType = 1;
 
+      $scope.searchnow = function (searchType, lat, lng) {
+
+
+        $scope.searchLat = lat;
+        $scope.searchLng = lng;
+
+        var firebaseRef = firebase.database().ref('search-2/geolist/' + searchType);
+        var geoFire = new GeoFire(firebaseRef);
+        var ref = geoFire.ref(); // ref === firebaseRef
+        var geoQuery = geoFire.query({
+          center: [lat, lng],
+          radius: 50
+        });
+
+        $scope.BOARDS = [];
+        $scope.boardsLookup = {};
+
+        geoQuery.on("key_entered", function (key, location, distance) {
+          if (!$scope.boardsLookup[key]) {
+            $scope.boardsLookup[key] = true;
+          firebase.database().ref('/search-2/snapshot/' + key).once('value').then(function (snapshot) {
+
+
+            var location1 = [10.3, -55.3];
+            var location2 = [-78.3, 105.6];
+            var distance = GeoFire.distance([$scope.searchLat, $scope.searchLng], location);
+
+            $scope.BOARDS.push({
+
+              id: "123123123",
+              name: snapshot.val().n,
+              lat: location[0],
+              lng: location[1],
+              distance: distance,
+              distanceLabel: Math.round(distance * 0.621371)
+
+            })
+            console.log('added ' + snapshot.val().n, )
+            $scope.$apply();
+
+            // var marker = new google.maps.Marker({
+            //   map: map,
+            //   position: {
+            //     lat: location[0],
+            //     lng: location[1]
+            //   }
+            // });
+            // google.maps.event.addListener(marker, 'click', function () {
+            //   infowindow.setContent(snapshot.val().n);
+            //   infowindow.open(map, this);
+            // });
+          });
+        }
+        });
+
+        geoQuery.on("ready", function () {
+          console.log('REASDY !!');
+        });
+
+        var searchInitRef = db.ref("search-2/init");
+        searchInitRef.push({
+          type: searchType,
+          lat: lat,
+          lng: lng
+        });
+
+
+      }
+
+
+
     });
 
     // https://stackoverflow.com/questions/10413573/rounding-up-to-the-nearest-0-05-in-javascript
- 
+
 
 
     var lat = 42.532;
- 
+
     console.log(Round005(lat));
 
-    
-    function Round005(number){
-      return (Math.round(number*200)/200).toFixed(3)
+
+    function Round005(number) {
+      return (Math.round(number * 200) / 200).toFixed(3)
     }
-    
+
 
 
 
@@ -126,8 +200,21 @@
 
 <body ng-app="myApp" ng-controller="myCtrl">
 
-  <div id="map"></div>
+  <div id="map" style="position: absolute;top:0px;left:400px;right:0px;bottom:0px"></div>
+  <div id="stuff" style="background-image: url('https://beerroster.com/mobile/img/chalkboard_1.jpg');overflow:scroll;position: absolute;top:0px;left:0px;width:400px;bottom:0px;background-color:black;color:white;font-family: Arial;font-size:13px">
 
+    <div style=" display: flex;flex-wrap: wrap;flex-direction: row;justify-content: space-around;over-flow:hidden">
+      <div ng-repeat="board in BOARDS | orderBy: 'distance'" style="width:100px;margin:10px;height:100px;text-align:center;font-size:13px">
+        <img src="https://beerroster.com/mobile/img/bricon.png" style="height:40px;padding-bottom:5px;padding-top:5px" \>
+        <br>
+        <div style="max-height:34px;overflow:hidden">
+          <span style="color:#b9b9b9;line-height:18px">{{board.name}}</span>
+        </div>
+        <span style="display:block;color:#f3e8e5;padding-top:5px">{{board.distanceLabel}} Miles</span>
+      </div>
+    </div>
+
+  </div>
 </body>
 
 </html>
