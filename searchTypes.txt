@@ -1,0 +1,32 @@
+
+
+
+1 = Resturants
+2 = Bars
+
+100 = Mexican
+101 = Chinese
+102 = Italian
+103 = Japanese or Sushi
+104 = Greek
+105 = French
+106 = Thai
+107 = Spanish
+108 = Idian
+109 = Mediterranean
+
+110 = Irish
+111 = Brazilian
+
+200 = Steak
+201 = BBQ
+202 = Seafood
+
+
+
+
+
+
+
+
+

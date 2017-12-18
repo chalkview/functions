@@ -36,21 +36,21 @@ searchInitRef.on("child_added", function (snapshot) {
 var searchRef = db.ref("search-2/request");
 searchRef.on("child_added", function (snapshot) {
     var searchRequest = snapshot.val();
-    console.log(searchRequest)
     search(searchRequest, snapshot.key);
 });
 
 
 function searchInit(searchRequest, searchInitKey) {
-    var searchTrackerId = searchRequest.lat.toFixed(3) + "x" + searchRequest.lng.toFixed(3)
+    var searchTrackerId = Round005(searchRequest.lat) + "x" + Round005(searchRequest.lng);
     var key = searchTrackerId.replace(/\./g, 'd')
-    var searchTrackerRef = db.ref("search-2/track" + key).child(searchRequest.type);
+    var searchTrackerRef = db.ref("search-2/track/" + key).child(searchRequest.type);
     searchTrackerRef.once("value", function (snapshot) {
         if (snapshot.val() != true) {
             // Not Previously Searched. Request one.
             db.ref("search-2/request").push(searchRequest);
+            console.log('New Search');
         } else {
-            //console.log('Search Already Cached')
+            console.log('Repeat Search');
         }
         // Delete SearchInit node
         var searchInitRef = db.ref("search-2/init/" + searchInitKey);
@@ -60,39 +60,100 @@ function searchInit(searchRequest, searchInitKey) {
 
 function search(searchRequest, searchRequestKey) {
 
-    // Create Promise
-    var searchType = "";
-    switch (searchRequest.type) {
-        case 1:
-            searchType = "restaurant";
-            break;
-        case 2:
-        searchType = "bar";
-            break;
-        default:
+
+    var searchUrl = "";
+
+    if (!searchRequest.npt) {
+
+        var searchType = "";
+        var searchKeyword = "";
+        switch (searchRequest.type) {
+            case 1:
+                searchType = "restaurant";
+                break;
+            case 2:
+                searchType = "bar";
+                break;
+            case 100:
+                searchType = "restaurant";
+                searchKeyword = "Mexican";
+                break;
+            case 104:
+                searchType = "restaurant";
+                searchKeyword = "Greek";
+                break;
+            case 106:
+                searchType = "restaurant";
+                searchKeyword = "Thai";
+                break;
+            case 110:
+                searchType = "bar";
+                searchKeyword = "Irish";
+                break;
+            case 201:
+                searchType = "restaurant";
+                searchKeyword = "BBQ";
+                break;
+            case 202:
+                searchType = "restaurant";
+                searchKeyword = "Seafood";
+                break;
+            case 109:
+                searchType = "restaurant";
+                searchKeyword = "Mediterranean";
+                break;
+            case 500:
+                searchType = "restaurant";
+                searchKeyword = "Mcdonalds";
+                break;
+            case 501:
+                searchType = "cafe";
+                searchKeyword = "Starbucks";
+                break;
+            default:
+        }
+        //  var searchUrl = "https://maps.googleapis.com/maps/api/place/nearbysearch/json?rankby=distance&type=" + searchType + "&location=" + searchRequest.lat + "," + searchRequest.lng + "&key=" + googleKey;
+        searchUrl = "https://maps.googleapis.com/maps/api/place/nearbysearch/json?keyword=" + searchKeyword + "&rankby=distance&type=" + searchType + "&location=" + searchRequest.lat + "," + searchRequest.lng + "&key=" + googleKey;
+        console.log('Page 1 Search');
+    } else {
+        searchUrl = "https://maps.googleapis.com/maps/api/place/nearbysearch/json?pagetoken=" + searchRequest.npt + "&key=" + googleKey;
+        console.log('Page Next Search');
     }
 
-
-    var searchUrl = "https://maps.googleapis.com/maps/api/place/nearbysearch/json?rankby=distance&type=" + searchType + "&location=" + searchRequest.lat + "," + searchRequest.lng + "&key=" + googleKey;
 
     request({
         url: searchUrl,
     }, function (error, response, body) {
         if (!error && response.statusCode == 200) {
-            // Success
+            // Success     
+
+            
             var results = JSON.parse(body).results;
+            var html = JSON.parse(body).html_attributions;
             var nextPage = JSON.parse(body).next_page_token;
+            console.log('Total Returned - ' + results.length);
             for (var i = 0; i < results.length; i++) {
-                addPlace(results[i],searchRequest.type)
+                addPlace(results[i], searchRequest.type)
             }
             // Add SearchCompleteID Record
-            var searchTrackerId = searchRequest.lat.toFixed(3) + "x" + searchRequest.lng.toFixed(3)
-            var key = searchTrackerId.replace(/\./g, 'd')
-            db.ref("search-2/track/" + key).child(searchRequest.type).set(true);
+            if (searchRequest.lat) {
+                var searchTrackerId = Round005(searchRequest.lat) + "x" + Round005(searchRequest.lng);
+                var key = searchTrackerId.replace(/\./g, 'd')
+                db.ref("search-2/track/" + key).child(searchRequest.type).set(true);
+            }
+
+            if (nextPage) {
+                setTimeout(function () {
+                    db.ref("search-2/request").push({
+                        npt: nextPage,
+                        type: searchRequest.type
+                    });
+                }, 2200);
+            }
 
         } else {
             // Error Occurred
-            // console.log('ERROR - ' + error + response + body)
+
         }
     });
 
@@ -104,7 +165,7 @@ function search(searchRequest, searchRequestKey) {
 }
 
 
-function addPlace(place,type) {
+function addPlace(place, type) {
 
     var newPlace = {
         n: place.name,
@@ -112,13 +173,16 @@ function addPlace(place,type) {
         lng: place.geometry.location.lng
     }
     var geoFire = new GeoFire(db.ref("search-2/geolist/" + type));
-    geoFire.set(place.id, [place.geometry.location.lat, place.geometry.location.lng]).then(function () {
-    }, function (error) {
-    });
+    geoFire.set(place.id, [place.geometry.location.lat, place.geometry.location.lng]).then(function () {}, function (error) {});
     // Add Summary Record
     db.ref("search-2/snapshot/" + place.id).set(newPlace);
     searchInitRef.set(null);
 }
+
+
+function Round005(number){
+    return (Math.round(number*200)/200).toFixed(3)
+  }
 
 function viewPlace(placeId) {
     // Exists?
@@ -133,6 +197,3 @@ function viewPlace(placeId) {
 //     lng: -83.541895,
 //     type: 1
 // })
-
-
-
