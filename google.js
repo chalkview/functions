@@ -172,11 +172,14 @@ function addPlace(place, type) {
         lat: place.geometry.location.lat,
         lng: place.geometry.location.lng
     }
+
+    db.ref("search-2/snapshot/" + place.id).set(newPlace);
+    searchInitRef.set(null);
+
     var geoFire = new GeoFire(db.ref("search-2/geolist/" + type));
     geoFire.set(place.id, [place.geometry.location.lat, place.geometry.location.lng]).then(function () {}, function (error) {});
     // Add Summary Record
-    db.ref("search-2/snapshot/" + place.id).set(newPlace);
-    searchInitRef.set(null);
+
 }
 
 

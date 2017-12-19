@@ -60,7 +60,7 @@
         var lng = event.latLng.lng();
 
 
-        $scope.searchnow(201, lat, lng);
+        $scope.searchnow(106, lat, lng);
 
         // var firebaseRef = firebase.database().ref('search-2/geolist/' + $scope.searchType);
         // var geoFire = new GeoFire(firebaseRef);
@@ -122,6 +122,7 @@
 
         $scope.BOARDS = [];
         $scope.boardsLookup = {};
+        $scope.$apply();
 
         geoQuery.on("key_entered", function (key, location, distance) {
           if (!$scope.boardsLookup[key]) {
