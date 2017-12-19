@@ -39,6 +39,11 @@ searchRef.on("child_added", function (snapshot) {
     search(searchRequest, snapshot.key);
 });
 
+var searchRef = db.ref("search-2/placeInit");
+searchRef.on("child_added", function (snapshot) {
+    var searchRequest = snapshot.val();
+    palceInit(searchRequest, snapshot.key);
+});
 
 function searchInit(searchRequest, searchInitKey) {
     var searchTrackerId = Round005(searchRequest.lat) + "x" + Round005(searchRequest.lng);
@@ -125,15 +130,14 @@ function search(searchRequest, searchRequestKey) {
         url: searchUrl,
     }, function (error, response, body) {
         if (!error && response.statusCode == 200) {
-            // Success     
+            // Success
 
-            
             var results = JSON.parse(body).results;
             var html = JSON.parse(body).html_attributions;
             var nextPage = JSON.parse(body).next_page_token;
             console.log('Total Returned - ' + results.length);
             for (var i = 0; i < results.length; i++) {
-                addPlace(results[i], searchRequest.type)
+                addPlaceSnapshot(results[i], searchRequest.type)
             }
             // Add SearchCompleteID Record
             if (searchRequest.lat) {
@@ -164,8 +168,7 @@ function search(searchRequest, searchRequestKey) {
 
 }
 
-
-function addPlace(place, type) {
+function addPlaceSnapshot(place, type) {
 
     var newPlace = {
         n: place.name,
@@ -173,30 +176,75 @@ function addPlace(place, type) {
         lng: place.geometry.location.lng
     }
 
-    db.ref("search-2/snapshot/" + place.id).set(newPlace);
-    searchInitRef.set(null);
+    db.ref("search-2/snapshot/" + place.place_id).set(newPlace);
+    // searchInitRef.set(null);
 
     var geoFire = new GeoFire(db.ref("search-2/geolist/" + type));
-    geoFire.set(place.id, [place.geometry.location.lat, place.geometry.location.lng]).then(function () {}, function (error) {});
+    geoFire.set(place.place_id, [place.geometry.location.lat, place.geometry.location.lng]).then(function () { }, function (error) { });
     // Add Summary Record
 
 }
 
+function palceInit(searchRequest, searchInitKey) {
 
-function Round005(number){
-    return (Math.round(number*200)/200).toFixed(3)
-  }
+    console.log('PLACE INIT')
 
-function viewPlace(placeId) {
-    // Exists?
-    // If Not Load Google Place Details.
-    // Create New Record from Google Place.
-    // Save to List
+    var placeRef = db.ref("search-2/place").child(searchRequest.id);
+    placeRef.once("value", function (snapshot) {
+        if (snapshot.val() != true) {
+            // Not Previously Searched. Request one.
+            addPlace(searchRequest.id)
+        } else {
+            // Already Exists
+        }
+        // Delete SearchInit node
+        var searchInitRef = db.ref("search-2/placeInit").child(searchInitKey);
+        searchInitRef.set(null);
+    });
 }
 
-// db.ref("searchInit").push({
+function addPlace(id) {
 
-//     lat: 42.532038,
-//     lng: -83.541895,
-//     type: 1
-// })
+    console.log('Adding Place')
+
+    var searchUrl = "https://maps.googleapis.com/maps/api/place/details/json?placeid=" + id + "&key=" + googleKey;
+    request({
+        url: searchUrl,
+    }, function (error, response, body) {
+        if (!error && response.statusCode == 200) {
+            // Success
+            var results = JSON.parse(body).result;
+
+
+
+            var newPlace = {};
+
+            if (results.name) { newPlace.n = results.name };
+            if (results.vicinity) { newPlace.a = results.vicinity };
+            if (results.formatted_phone_number) { newPlace.p = results.formatted_phone_number };
+            if (results.rating) { newPlace.r = results.rating };
+            if (results.url) { newPlace.client_x509_cert_url = results.url };
+            if (results.website) { newPlace.w = results.website };
+
+
+            db.ref("search-2/place/" + id).set(newPlace);
+            searchInitRef.set(null);
+
+
+        } else {
+            // Error Occurred
+
+        }
+    });
+
+
+
+}
+
+
+
+
+function Round005(number) {
+    return (Math.round(number * 200) / 200).toFixed(3)
+}
+

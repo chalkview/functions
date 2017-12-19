@@ -48,6 +48,7 @@ search-2/  1=Chalkview 2=Google 3=Facebook 4=FourSquare 5=Yelp
     trackMore   - Track was performed but detected more places inside its range. Init request in surrouding area. Used for heavily populated area.
     geoList     - /typeId Geo List for each search type
     snapshot    - Place Snapshot Data
+    placeInit   - Load Place Info
     place       - Place Details
 
 

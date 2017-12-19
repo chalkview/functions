@@ -41,8 +41,12 @@
 
     var db = firebase.database();
 
-    var app = angular.module('myApp', []);
-    app.controller('myCtrl', function ($scope) {
+    var app = angular.module('myApp', ["firebase"]);
+    app.controller('myCtrl', function ($scope, $firebaseObject) {
+
+
+      // var searchInitRef = db.ref("search-2");
+      // searchInitRef.set(null);
 
       $scope.geoList = null;
       var pyrmont = {
@@ -60,47 +64,7 @@
         var lng = event.latLng.lng();
 
 
-        $scope.searchnow(106, lat, lng);
-
-        // var firebaseRef = firebase.database().ref('search-2/geolist/' + $scope.searchType);
-        // var geoFire = new GeoFire(firebaseRef);
-        // var ref = geoFire.ref(); // ref === firebaseRef
-        // var geoQuery = geoFire.query({
-        //   center: [lat, lng],
-        //   radius: 20
-        // });
-
-        // geoQuery.on("key_entered", function (key, location, distance) {
-
-        //   console.log('add');
-        //   firebase.database().ref('/search-2/snapshot/' + key).once('value').then(function (snapshot) {
-        //     var marker = new google.maps.Marker({
-        //       map: map,
-        //       position: {
-        //         lat: location[0],
-        //         lng: location[1]
-        //       }
-        //     });
-        //     google.maps.event.addListener(marker, 'click', function () {
-        //       infowindow.setContent(snapshot.val().n);
-        //       infowindow.open(map, this);
-        //     });
-        //   });
-        // });
-
-        // geoQuery.on("ready", function () {
-        //   console.log('REASDY !!');
-        // });
-
-        // var searchInitRef = db.ref("search-2/init");
-        // searchInitRef.push({
-        //   type: $scope.searchType,
-        //   lat: lat,
-        //   lng: lng
-        // });
-
-
-
+        $scope.searchnow(1, lat, lng);
 
       });
 
@@ -127,39 +91,37 @@
         geoQuery.on("key_entered", function (key, location, distance) {
           if (!$scope.boardsLookup[key]) {
             $scope.boardsLookup[key] = true;
-          firebase.database().ref('/search-2/snapshot/' + key).once('value').then(function (snapshot) {
+            firebase.database().ref('/search-2/snapshot/' + key).once('value').then(function (snapshot) {
 
 
-            var location1 = [10.3, -55.3];
-            var location2 = [-78.3, 105.6];
-            var distance = GeoFire.distance([$scope.searchLat, $scope.searchLng], location);
+              var distance = GeoFire.distance([$scope.searchLat, $scope.searchLng], location);
 
-            $scope.BOARDS.push({
+              $scope.BOARDS.push({
 
-              id: "123123123",
-              name: snapshot.val().n,
-              lat: location[0],
-              lng: location[1],
-              distance: distance,
-              distanceLabel: Math.round(distance * 0.621371)
+                id: key,
+                name: snapshot.val().n,
+                lat: location[0],
+                lng: location[1],
+                distance: distance,
+                distanceLabel: Math.round(distance * 0.621371)
 
-            })
-            console.log('added ' + snapshot.val().n, )
-            $scope.$apply();
+              })
+              console.log('added ' + snapshot.val().n, )
+              $scope.$apply();
 
-            // var marker = new google.maps.Marker({
-            //   map: map,
-            //   position: {
-            //     lat: location[0],
-            //     lng: location[1]
-            //   }
-            // });
-            // google.maps.event.addListener(marker, 'click', function () {
-            //   infowindow.setContent(snapshot.val().n);
-            //   infowindow.open(map, this);
-            // });
-          });
-        }
+              // var marker = new google.maps.Marker({
+              //   map: map,
+              //   position: {
+              //     lat: location[0],
+              //     lng: location[1]
+              //   }
+              // });
+              // google.maps.event.addListener(marker, 'click', function () {
+              //   infowindow.setContent(snapshot.val().n);
+              //   infowindow.open(map, this);
+              // });
+            });
+          }
         });
 
         geoQuery.on("ready", function () {
@@ -176,7 +138,24 @@
 
       }
 
+      $scope.showPlace = function (id) {
 
+
+        var searchInitRef = db.ref("search-2/placeInit");
+        searchInitRef.push({
+          id: id
+        });
+
+        var ref = db.ref("search-2/place").child(id);
+        $scope.place = $firebaseObject(ref);
+      }
+
+
+      // $scope.place = {
+
+      //   n: 'Mike\'s bar'
+
+      // }
 
     });
 
@@ -201,12 +180,13 @@
 
 <body ng-app="myApp" ng-controller="myCtrl">
 
-  <div id="map" style="position: absolute;top:0px;left:400px;right:0px;bottom:0px"></div>
+  <div id="map" style="position: absolute;top:0px;left:800px;right:0px;bottom:0px"></div>
   <div id="stuff" style="background-image: url('https://beerroster.com/mobile/img/chalkboard_1.jpg');overflow:scroll;position: absolute;top:0px;left:0px;width:400px;bottom:0px;background-color:black;color:white;font-family: Arial;font-size:13px">
 
     <div style=" display: flex;flex-wrap: wrap;flex-direction: row;justify-content: space-around;over-flow:hidden">
       <div ng-repeat="board in BOARDS | orderBy: 'distance'" style="width:100px;margin:10px;height:100px;text-align:center;font-size:13px">
-        <img src="https://beerroster.com/mobile/img/bricon.png" style="height:40px;padding-bottom:5px;padding-top:5px" \>
+        <img ng-click="showPlace(board.id)" src="https://beerroster.com/mobile/img/bricon.png" style="height:40px;padding-bottom:5px;padding-top:5px"
+          \>
         <br>
         <div style="max-height:34px;overflow:hidden">
           <span style="color:#b9b9b9;line-height:18px">{{board.name}}</span>
@@ -216,6 +196,56 @@
     </div>
 
   </div>
+  <div id="details" style="background-image: url('https://beerroster.com/mobile/img/chalkboard_1.jpg');overflow:scroll;position: absolute;top:0px;left:400px;width:400px;bottom:0px;background-color:black;color:white;font-family: Arial;font-size:13px">
+    <br>
+    <div class="chalk-yellow" style="font-size:32px;text-align:center;font-family: chalk1';">{{place.n}}</div>
+    <br>
+    <div class="chalk-white"style="font-size:18px;text-align:center">{{place.a}}</div>
+    <div class="chalk-white"style="font-size:18px;text-align:center">{{place.p}}</div>
+    <br>
+    <div class="chalk-red"style="font-size:18px;text-align:center" ng-if="place.r">Google Rating - {{place.r}}</div>
+
+  </div>
+  <style>
+    body{
+
+      font-family: "chalk1";
+    }
+
+@font-face {
+    font-family: "chalk1";
+    src: url("chalk1.ttf")
+}
+
+    .chalk-red {
+      color: #ed7777;
+    }
+
+    .chalk-orange {
+      color: #fad48b;
+    }
+
+    .chalk-yellow {
+      color: #f5f9ad;
+    }
+
+    .chalk-green {
+      color: #bcdf8a;
+    }
+
+    .chalk-blue {
+      color: #94c0cc;
+    }
+
+    .chalk-white {
+      color: #f6f4f1;
+    }
+
+    .chalk-gray {
+      color: gray;
+    }
+  </style>
+
 </body>
 
 </html>
